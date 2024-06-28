@@ -14,11 +14,9 @@
 // Definitions
 /////////////////////////////////////////////////////////////////////////////////////
 
-// In case of dystopian futures where char != 8 bits
-typedef uint8_t u8;
 static constexpr short bufsize = 256;
 static constexpr short keysize = 16;
-static constexpr u8 keyconst[] =
+static constexpr unsigned char keyconst[] =
 {
 	0xBC, 0x20, 0x05, 0x1A,
 	0xB5, 0x97, 0xF9, 0x60,
@@ -34,10 +32,10 @@ static const char *buttonmap = "AXYUDLR";
 /////////////////////////////////////////////////////////////////////////////////////
 
 // This assumes that the input and output arrays are the same size
-bool digest_HDD_HMAC(u8 *input, u8 *output, unsigned int size)
+bool digest_HDD_HMAC(unsigned char *input, unsigned char *output, unsigned int size)
 {
-	if(input == nullptr || output == nullptr || size <= 0) return false;
-	return (HMAC(EVP_sha1(), keyconst, keysize, input, size, output, &size) != nullptr);
+	if(input == nullptr || output == nullptr || size <= 0) return nullptr;
+	return HMAC(EVP_sha1(), keyconst, keysize, input, size, output, &size) != nullptr;
 }
 
 void usage(void) { printf("usage!\n"); }
@@ -57,7 +55,7 @@ int main(int argc, char *argv[])
 	}
 
 	char *program = argv[0];
-	u8 HDDinput[bufsize] = {0}, result[bufsize] = {0};
+	unsigned char HDDinput[bufsize] = {0}, result[bufsize] = {0};
 
 	// Argument parsing here
 	int c;
@@ -115,16 +113,16 @@ int main(int argc, char *argv[])
 	}
 
 	// Getting the HMAC-SHA1 digest of the HDD key
-	bool hmac_ret = digest_HDD_HMAC(HDDinput, result, bufsize);
-	if(hmac_ret == false)
+	if(!digest_HDD_HMAC(HDDinput, result, bufsize))
 	{
-		fprintf(stderr, "%s: error when computing HMAC-SHA1 digest\n", program);
+		fprintf(stderr, "%s: error while generating HMAC digest\n", program);
 		exit(EXIT_FAILURE);
 	}
 
-	for(unsigned int i = 0; i < bufsize; i++)
+	// Printing the result for debugging purposes
+	for(unsigned int i = 0; i < bufsize && result[i] != 0; i++)
 	{
-		printf("0x%02X ", HDDinput[i]); // or just "%02X" if you are not using C11 or later
+		printf("0x%02X ", result[i]); // or just "%02X" if you are not using C11 or later
 	}
 
 	putchar('\n');
